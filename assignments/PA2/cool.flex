@@ -39,17 +39,30 @@ extern int verbose_flag;
 
 extern YYSTYPE cool_yylval;
 
-/*
- *  Add Your own definitions here
- */
-
+static int comment_stack = 0;
+static int null_char = 0;
+static std::string curr_string;
 %}
 
 /*
  * Define names for regular expressions here.
  */
 
-DARROW          =>
+DARROW               =>
+DIGIT                [0-9]
+NUMBER               {DIGIT}+
+ESCAPE               \\
+NEWLINE              \n
+NULL_CHAR            \0
+SINGLE_CHAR_TOKEN    [:+\-*/=)(}{~.,;<@]
+TRUE                 t(?i:rue)
+FALSE                f(?i:alse)
+L_PAREN              \(
+R_PAREN              \)
+STAR                 \*
+QUOTE                \"
+WHITESPACE           [\t \r \f \v]
+HYPHEN               -
 
 %%
 

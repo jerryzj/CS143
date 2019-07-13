@@ -39,9 +39,9 @@ extern int verbose_flag;
 
 extern YYSTYPE cool_yylval;
 
-static int comment_stack = 0;
-static int null_char = 0;
-static std::string curr_string;
+static int comments_stack = 0;
+static int null_char_present = 0;
+static std::string current_string;
 %}
 
 /*

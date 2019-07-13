@@ -54,7 +54,7 @@ INTEGER              {DIGIT}+
 ESCAPE               \\
 NEWLINE              \n
 NULL_CHAR            \0
-ONE_CHAR_TOKEN       [:+\-*/=)(}{~.,;<@]
+ONE_CHAR_TOKENS      [:+\-*/=)(}{~.,;<@]
 TRUE                 t(?i:rue)
 FALSE                f(?i:alse)
 L_PAREN              \(
@@ -92,7 +92,7 @@ OBJECT_ID            [a-z]{ALPHANUM}*
 
 {WHITESPACE}    ;
 
-{HYPHEN}{HYPHEN}{
+{HYPHEN}{HYPHEN} {
     BEGIN COMMENT_IN_LINE;
 }
 
@@ -119,22 +119,22 @@ OBJECT_ID            [a-z]{ALPHANUM}*
     return INT_CONST;
 }
 
-{TYPE_ID}{
+{TYPE_ID} {
     cool_yylval.symbol = inttable.add_string(yytext);
     return TYPEID;
 }
 
-{OBJECT_ID}{
+{OBJECT_ID} {
     cool_yylval.symbol = inttable.add_string(yytext);
     return OBJECTID;
 }
 
-{STAR}{RPAREN} {
+{STAR}{R_PAREN} {
     cool_yylval.error_msg = "Mismatched *)";
     return ERROR;
 }
 
-{LPAREN}{STAR} {
+{L_PAREN}{STAR} {
     comments_stack++;
     BEGIN COMMENTS;
 }
@@ -190,13 +190,6 @@ OBJECT_ID            [a-z]{ALPHANUM}*
     null_char_present = 1;
 }
 
- /*
-  *  String constants (C syntax)
-  *  Escape sequence \c is accepted for all characters c. Except for 
-  *  \n \t \b \f, the result is c.
-  *
-  */
-
 <STRING>{ESCAPE}. {
     char ch;
     switch((ch = yytext[1])) {
@@ -230,11 +223,11 @@ OBJECT_ID            [a-z]{ALPHANUM}*
     current_string += yytext;
 }
 
-<COMMENTS>{LPAREN}{STAR} {
+<COMMENTS>{L_PAREN}{STAR} {
     comments_stack++;
 }
 
-<COMMENTS>{STAR}{RPAREN} {
+<COMMENTS>{STAR}{R_PAREN} {
     comments_stack--;
     if (comments_stack == 0) {
        BEGIN INITIAL;
@@ -244,10 +237,13 @@ OBJECT_ID            [a-z]{ALPHANUM}*
 <COMMENTS>{NEWLINE} {
     curr_lineno++;
 }
+
 <COMMENTS><<EOF>> {
     BEGIN INITIAL;
-    cool_yylval.error_msg = "EOF in comment";
+    cool_yylval.error_msg = "EOF in comment scope";
     return ERROR;
 }
+
+<COMMENTS>. ;
 
 %%

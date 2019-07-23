@@ -4,27 +4,26 @@
 *
 */
 %{
-  #include <iostream>
-  #include "cool-tree.h"
-  #include "stringtab.h"
-  #include "utilities.h"
-  
-  extern char *curr_filename;
-  
-  
-  /* Locations */
-  #define YYLTYPE int              /* the type of locations */
-  #define cool_yylloc curr_lineno  /* use the curr_lineno from the lexer
-  for the location of tokens */
+    #include <iostream>
+    #include "cool-tree.h"
+    #include "stringtab.h"
+    #include "utilities.h"
+
+    extern char *curr_filename;
+
+    /* Locations */
+    #define YYLTYPE int              /* the type of locations */
+    #define cool_yylloc curr_lineno  /* use the curr_lineno from the lexer
+    for the location of tokens */
     
     extern int node_lineno;          /* set before constructing a tree node
     to whatever you want the line number
     for the tree node to be */
       
       
-      #define YYLLOC_DEFAULT(Current, Rhs, N)         \
-      Current = Rhs[1];                             \
-      node_lineno = Current;
+    #define YYLLOC_DEFAULT(Current, Rhs, N)         \
+    Current = Rhs[1];                             \
+    node_lineno = Current;
     
     
     #define SET_NODELOC(Current)  \
@@ -48,26 +47,26 @@
     
     plus_consts	: INT_CONST '+' INT_CONST 
     {
-      // Set the line number of the current non-terminal:
-      // ***********************************************
-      // You can access the line numbers of the i'th item with @i, just
-      // like you acess the value of the i'th exporession with $i.
-      //
-      // Here, we choose the line number of the last INT_CONST (@3) as the
-      // line number of the resulting expression (@$). You are free to pick
-      // any reasonable line as the line number of non-terminals. If you 
-      // omit the statement @$=..., bison has default rules for deciding which 
-      // line number to use. Check the manual for details if you are interested.
-      @$ = @3;
-      
-      
-      // Observe that we call SET_NODELOC(@3); this will set the global variable
-      // node_lineno to @3. Since the constructor call "plus" uses the value of 
-      // this global, the plus node will now have the correct line number.
-      SET_NODELOC(@3);
-      
-      // construct the result node:
-      $$ = plus(int_const($1), int_const($3));
+        // Set the line number of the current non-terminal:
+        // ***********************************************
+        // You can access the line numbers of the i'th item with @i, just
+        // like you acess the value of the i'th exporession with $i.
+        //
+        // Here, we choose the line number of the last INT_CONST (@3) as the
+        // line number of the resulting expression (@$). You are free to pick
+        // any reasonable line as the line number of non-terminals. If you 
+        // omit the statement @$=..., bison has default rules for deciding which 
+        // line number to use. Check the manual for details if you are interested.
+        @$ = @3;
+    
+    
+        // Observe that we call SET_NODELOC(@3); this will set the global variable
+        // node_lineno to @3. Since the constructor call "plus" uses the value of 
+        // this global, the plus node will now have the correct line number.
+        SET_NODELOC(@3);
+    
+        // construct the result node:
+        $$ = plus(int_const($1), int_const($3));
     }
     
     */
@@ -87,20 +86,20 @@
     
     /* A union of all the types that can be the result of parsing actions. */
     %union {
-      Boolean boolean;
-      Symbol symbol;
-      Program program;
-      Class_ class_;
-      Classes classes;
-      Feature feature;
-      Features features;
-      Formal formal;
-      Formals formals;
-      Case case_;
-      Cases cases;
-      Expression expression;
-      Expressions expressions;
-      char *error_msg;
+        Boolean boolean;
+        Symbol symbol;
+        Program program;
+        Class_ class_;
+        Classes classes;
+        Feature feature;
+        Features features;
+        Formal formal;
+        Formals formals;
+        Case case_;
+        Cases cases;
+        Expression expression;
+        Expressions expressions;
+        char *error_msg;
     }
     
     /* 
@@ -165,7 +164,7 @@
     ;
     
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:		/* empty */
+    dummy_feature_list:     /* empty */
     {  $$ = nil_Features(); }
     
     
@@ -175,15 +174,15 @@
     /* This function is called automatically when Bison detects a parse error. */
     void yyerror(char *s)
     {
-      extern int curr_lineno;
-      
-      cerr << "\"" << curr_filename << "\", line " << curr_lineno << ": " \
-      << s << " at or near ";
-      print_cool_token(yychar);
-      cerr << endl;
-      omerrs++;
-      
-      if(omerrs>50) {fprintf(stdout, "More than 50 errors\n"); exit(1);}
+        extern int curr_lineno;
+
+        cerr << "\"" << curr_filename << "\", line " << curr_lineno << ": " \
+        << s << " at or near ";
+        print_cool_token(yychar);
+        cerr << endl;
+        omerrs++;
+
+        if(omerrs>50) {fprintf(stdout, "More than 50 errors\n"); exit(1);}
     }
     
     

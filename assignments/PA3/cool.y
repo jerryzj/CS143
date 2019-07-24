@@ -134,40 +134,172 @@
     %type <class_> class
     
     /* You will want to change the following line. */
-    %type <features> dummy_feature_list
-    
+    %type <features> feature_list
+    %type <feature> feature
+    %type <formals> formal_list
+    %type <formal> formal
+    %type <expression> expression
+    %type <expression> cond_expression
+    %type <expression> let_expression
+    %type <expression> dispatch_expression
+    %type <expression> while_expression
+    %type <expression> case_expression
+    %type <expressions> expression_block
+    %type <expressions> expression_list
+    %type <cases> case_branches
+    %type <case_> case_branch
     /* Precedence declarations go here. */
-    
+    %left '.' '@'
+    %left ASSIGN
+    %precedence LET
+    %left LE '<' '='
+    %left '+' '-'
+    %left '*' '/'
+    %left '('
     
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
-    program	: class_list	{ @$ = @1; ast_root = program($1); }
-    ;
+    program : class_list {
+        @$ = @1; 
+        ast_root = program($1); 
+    };
     
     class_list
-    : class			/* single class */
-    { $$ = single_Classes($1);
-    parse_results = $$; }
-    | class_list class	/* several classes */
-    { $$ = append_Classes($1,single_Classes($2)); 
-    parse_results = $$; }
-    ;
+    : class /* single class */ {
+        $$ = single_Classes($1);
+        parse_results = $$; 
+    }
+    | class_list class  /* several classes */ { 
+        $$ = append_Classes($1,single_Classes($2)); 
+        parse_results = $$; 
+    };
     
+    class
+    : CLASS error '{' '}' ';'
+    | CLASS error '{' feature_list '}' ';'
+    | CLASS TYPEID '{' '}' ';' {
+        $$ = class_($2, idtable.add_string("Object"), nil_Features(), 
+            stringtable.add_string(curr_filename));
+    }
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
-    { $$ = class_($2,idtable.add_string("Object"),$4,
-    stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
-    { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
-    ;
+    | CLASS TYPEID '{' feature_list '}' ';' {
+        $$ = class_($2,idtable.add_string("Object"),$4,
+            stringtable.add_string(curr_filename));
+    }
+    | CLASS TYPEID INHERITS TYPEID '{' '}' ';' {
+        $$ = class_($2, $4, nil_Features(), stringtable.add_string(curr_filename));
+    }
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';' {
+        $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); 
+    };
     
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:     /* empty */
-    {  $$ = nil_Features(); }
+    feature
+    : error ';'
+    | OBJECTID '(' ')' ':' TYPEID '{' expression '}' ';' {
+        $$ = method($1, nil_Formals(), $5, $7);
+    }
+    | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' ';' {
+        $$ = method($1, $3, $6, $8);
+    };
     
-    
+    feature
+    : OBJECTID ':' TYPEID ';' {
+        $$ = attr($1, $3, no_expr());
+    }
+    | OBJECTID ':' TYPEID ASSIGN expression ';' {
+        $$ = attr($1, $3, $5);
+    };
+
+    formal_list
+    : formal {
+        $$ = single_Formals($1);
+    }
+    | formal_list ',' formal {
+        $$ = append_Formals($1, single_Formals($3));
+    };
+
+    formal : OBJECTID ':' TYPEID {
+        $$ = formal($1, $3);
+    };
+
+    expression 
+    : INT_CONST {
+        $$ = int_const($1);
+    }
+    | BOOL_CONST {
+        $$ = bool_const($1);
+    }
+    | STR_CONST {
+        $$ = str_const($1);
+    }
+    | OBJECTID {
+        $$ = object($1);
+    }
+    | '(' expression ')' {
+        $$ = $2;
+    }
+    | '{' expression_block '}' {
+        $$ = block($2);
+    }
+    | OBJECTID ASSIGN expression {
+        $$ = assign($1, $3);
+    }
+    | expression LE expression {
+        $$ = leq($1, $3);
+    }
+    | expression '<' expression {
+        $$ = lt($1, $3);
+    }
+    | expression '=' expression {
+        $$ = eq($1, $3);
+    }
+    | '-' expression {
+        $$ = neq($2);
+    }
+    | expression '+' expression {
+        $$ = plus($1, $3);
+    }
+    | expression '-' expression {
+        $$ = sub($1, $3);
+    }
+    | expression '*' expression {
+        $$ = mul($1, $3);
+    }
+    | expression '/' expression {
+        $$ = divide($1, $3);
+    }
+    | cond_expression
+    | dispatch_expression
+    | case_expression
+    | let_expression
+    ;
+
+    expression_list
+    : expression_list ',' nonempty_expr {
+        $$ = append_Expressions($1, single_Expressions($3));
+    }
+    | expression {
+        $$ = single_Expressions($1);
+    };
+
+    expression_block
+    : expression {
+        $$ = single_Expressions($1);
+    }
+    | expression_block ';' error ';'
+    | expression_block ';' expression ';' {
+        $$ = append_Expressions($1, single_Expressions($3));
+    };
+
+    case_expression
+    : CASE expression OF case_branches ESAC {
+        $$ = typcase($2, $4);
+    };
+
+
     /* end of grammar */
     %%
     

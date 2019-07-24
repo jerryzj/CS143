@@ -299,6 +299,49 @@
         $$ = typcase($2, $4);
     };
 
+    case_branches
+    : case_branch ';' {
+        $$ = single_Cases($1);
+    }
+    | case_branches case_branch ';' {
+        $$ = append_Cases($1, single_Cases($2));
+    };
+
+    case_branch
+    : OBJECTID ':' TYPEID DARROW expression {
+        $$ = branch($1, $3, $5);
+    };
+
+    while_expression
+    : WHILE expression LOOP expression POOL {
+        $$ = loop($2, $4);
+    };
+
+    dispatch_expression
+    : expression '.' OBJECTID '(' expression_list ')' {
+        $$ = dispatch($1, $3, $5);
+    }
+    | OBJECTID '(' expression_list ')' {
+        Entry *self = idtable.add_string("self");
+        $$ = dispatch(object(self), $1, $3);
+    }
+    | expression '@' TYPEID '.' OBJECTID '(' expression_list ')' {
+        $$ = static_dispatch($1, $3, $5, $7);
+    };
+
+    cond_expression
+    : IF expression THEN expression FI {
+        $$ = cond($2, $4, no_expr());
+    }
+    | IF expression THEN expression ELSE expression FI {
+        $$ = cond($2, $4, $6);
+    };
+
+    let_expression
+    : LET error IN exporession
+    | LET OBJECTID ':' TYPEID ASSIGN expression IN expression %prec LET {
+        $$ = let($2, $4, $6, $8);
+    };
 
     /* end of grammar */
     %%
@@ -316,5 +359,3 @@
 
         if(omerrs>50) {fprintf(stdout, "More than 50 errors\n"); exit(1);}
     }
-    
-    
